@@ -1,19 +1,24 @@
-from rest_framework import generics
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.generics import *
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 from .models import Movie, Review, Favorite
 from .serializers import MovieSerializer, ReviewSerializer, FavoriteSerializer
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import SearchFilter, OrderingFilter
 
-class MovieList(generics.ListCreateAPIView):
+class MovieList(ListCreateAPIView):
     """Представление для списка всех фильмов и создания новых фильмов."""
     queryset = Movie.objects.all()
     serializer_class = MovieSerializer
+    filter_backends = [SearchFilter, OrderingFilter, DjangoFilterBackend]
+    search_fields = ['title', 'genres__name']
+    ordering_fields = ['rating','release_year','duration_minutes',]
 
-class MovieDetail(generics.RetrieveUpdateDestroyAPIView):
+class MovieDetail(RetrieveUpdateDestroyAPIView):
     """Представление для детального просмотра, обновления и удаления фильма."""
     queryset = Movie.objects.all()
     serializer_class = MovieSerializer
 
-class ReviewList(generics.ListCreateAPIView):
+class ReviewList(ListCreateAPIView):
     """Представление для списка всех отзывов к фильму и создания новых отзывов."""
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
@@ -23,16 +28,16 @@ class ReviewList(generics.ListCreateAPIView):
         """Автоматическое присвоение текущего пользователя отзыву."""
         serializer.save(user=self.request.user)
 
-class ReviewDetail(generics.RetrieveUpdateDestroyAPIView):
+class ReviewDetail(RetrieveUpdateDestroyAPIView):
     """Представление для детального просмотра, обновления и удаления отзыва."""
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
 
-class FavoriteList(generics.ListCreateAPIView):
+class FavoriteList(ListCreateAPIView):
     """Представление для списка всех избранных фильмов пользователя и создания новых избранных фильмов."""
     queryset = Favorite.objects.all()
     serializer_class = FavoriteSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         """Получение списка избранных фильмов текущего пользователя."""
@@ -41,9 +46,9 @@ class FavoriteList(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         """Автоматическое присвоение текущего пользователя избранному фильму."""
-        serializer.save(user=self.request.user)
+        serializer.save(user=self.request.user.id)
 
-class FavoriteDetail(generics.RetrieveUpdateDestroyAPIView):
+class FavoriteDetail(RetrieveUpdateDestroyAPIView):
     """Представление для детального просмотра, обновления и удаления избранного фильма."""
     queryset = Favorite.objects.all()
     serializer_class = FavoriteSerializer
